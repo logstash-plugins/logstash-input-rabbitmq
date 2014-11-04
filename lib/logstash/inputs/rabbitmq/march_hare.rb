@@ -66,7 +66,6 @@ class LogStash::Inputs::RabbitMQ
 
     def teardown
       shutdown_consumer
-      @q.delete unless @durable
 
       @ch.close         if @ch && @ch.open?
       @connection.close if @connection && @connection.open?
