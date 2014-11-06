@@ -59,7 +59,7 @@ class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
   config :durable, :validate => :boolean, :default => false
 
   # Should the queue be deleted on the broker when the last consumer
-  # disconnects? Set this option to 'false' if you want the queue to remain
+  # disconnects? Set this option to `false` if you want the queue to remain
   # on the broker, queueing up messages until a consumer comes along to
   # consume them.
   config :auto_delete, :validate => :boolean, :default => false
@@ -70,7 +70,7 @@ class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
   config :exclusive, :validate => :boolean, :default => false
 
   # Extra queue arguments as an array.
-  # To make a RabbitMQ queue mirrored, use: {"x-ha-policy" => "all"}
+  # To make a RabbitMQ queue mirrored, use: `{"x-ha-policy" => "all"}`
   config :arguments, :validate => :array, :default => {}
 
   # Prefetch count. Number of messages to prefetch
@@ -109,7 +109,7 @@ class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
     super
   end
 
-  # Use March Hare on JRuby to avoid IO#select CPU spikes
+  # Use March Hare on JRuby to avoid `IO#select` CPU spikes
   # (see github.com/ruby-amqp/bunny/issues/95).
   #
   # On MRI, use Bunny.
