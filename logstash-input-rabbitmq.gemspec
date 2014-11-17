@@ -25,10 +25,10 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'logstash-codec-json'
 
   if RUBY_PLATFORM == 'java'
+    s.platform = RUBY_PLATFORM
     s.add_runtime_dependency 'march_hare', ['~> 2.5.1']
   else
     s.add_runtime_dependency 'bunny', ['>= 1.6.0']
   end
-
 end
 
