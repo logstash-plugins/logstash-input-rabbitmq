@@ -16,7 +16,6 @@ require "logstash/namespace"
 class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
 
   config_name "rabbitmq"
-  milestone 1
 
   #
   # Connection
