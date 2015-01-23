@@ -103,8 +103,8 @@ class LogStash::Inputs::RabbitMQ
       # exchange binding is optional for the input
       if @exchange
         @ch.exchange(@exchange,
-+          :durable     => @durable,
-+          :auto_delete => @auto_delete)
+          :durable     => @durable,
+          :auto_delete => @auto_delete)
         @q.bind(@exchange, :routing_key => @key)
       end
     end
