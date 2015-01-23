@@ -3,7 +3,7 @@ class LogStash::Inputs::RabbitMQ
   # MarchHare-based implementation for JRuby
   module MarchHareImpl
     def register
-      require "hot_bunnies"
+      require "march_hare"
       require "java"
 
       @vhost       ||= "127.0.0.1"
