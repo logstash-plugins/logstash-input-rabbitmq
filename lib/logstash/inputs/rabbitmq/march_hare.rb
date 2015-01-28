@@ -53,6 +53,8 @@ class LogStash::Inputs::RabbitMQ
           n = 10
           @logger.error("RabbitMQ connection error: #{e}. Will reconnect in #{n} seconds...")
 
+          @conn.close if @conn && @conn.open?
+
           sleep n
           retry
         rescue LogStash::ShutdownSignal => ss
@@ -67,8 +69,8 @@ class LogStash::Inputs::RabbitMQ
     def teardown
       shutdown_consumer
 
-      @ch.close         if @ch && @ch.open?
-      @connection.close if @connection && @connection.open?
+      @ch.close if @ch && @ch.open?
+      @conn.close if @conn && @conn.open?
 
       finished
     end
@@ -100,6 +102,9 @@ class LogStash::Inputs::RabbitMQ
 
       # exchange binding is optional for the input
       if @exchange
+        @ch.exchange(@exchange,
+          :durable     => @durable,
+          :auto_delete => @auto_delete)
         @q.bind(@exchange, :routing_key => @key)
       end
     end
