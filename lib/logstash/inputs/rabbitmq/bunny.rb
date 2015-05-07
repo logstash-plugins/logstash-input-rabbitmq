@@ -15,6 +15,9 @@ class LogStash::Inputs::RabbitMQ
         :port  => @port,
         :automatically_recover => false
       }
+      @settings[:frame_max] = @session_frame_max || Bunny::Session::DEFAULT_FRAME_MAX
+      @settings[:timeout]   = @connection_timeout || Bunny::Transport::DEFAULT_CONNECTION_TIMEOUT
+      @settings[:user]      = @user || Bunny::DEFAULT_USER
       @settings[:user]      = @user || Bunny::DEFAULT_USER
       @settings[:pass]      = if @password
                                 @password.value
