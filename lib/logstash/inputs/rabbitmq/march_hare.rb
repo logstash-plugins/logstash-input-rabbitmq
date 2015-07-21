@@ -82,7 +82,7 @@ class LogStash::Inputs::RabbitMQ
     def setup
       return if terminating?
 
-      @conn = MarchHare.connect(@settings)
+      @conn = MarchHare.connect(@settings) unless @conn && @conn.open?
       @logger.info("Connected to RabbitMQ #{@connection_url}")
 
       @ch          = @conn.create_channel.tap do |ch|
