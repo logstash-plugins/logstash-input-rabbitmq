@@ -1,7 +1,6 @@
 Gem::Specification.new do |s|
-
   s.name            = 'logstash-input-rabbitmq'
-  s.version         = '1.0.0'
+  s.version         = '1.1.0'
   s.licenses        = ['Apache License (2.0)']
   s.summary         = "Pull events from a RabbitMQ exchange."
   s.description     = "This gem is a logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/plugin install gemname. This gem is not a stand-alone program"
@@ -26,7 +25,7 @@ Gem::Specification.new do |s|
 
   if RUBY_PLATFORM == 'java'
     s.platform = RUBY_PLATFORM
-    s.add_runtime_dependency 'march_hare', ['~> 2.5.1']
+    s.add_runtime_dependency 'march_hare', ['~> 2.11.0']
   else
     s.add_runtime_dependency 'bunny', ['>= 1.6.0']
   end
