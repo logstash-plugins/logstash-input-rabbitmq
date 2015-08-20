@@ -1,127 +1,111 @@
 # encoding: utf-8
-require "logstash/inputs/threadable"
-require "logstash/namespace"
+require 'logstash/plugin_mixins/rabbitmq_connection'
+require 'logstash/inputs/threadable'
 
-# Pull events from a RabbitMQ exchange.
-#
-# The default settings will create an entirely transient queue and listen for all messages by default.
-# If you need durability or any other advanced settings, please set the appropriate options
-#
-# This has been tested with Bunny 0.9.x, which supports RabbitMQ 2.x and 3.x. You can
-# find links to both here:
-#
-# * RabbitMQ - <http://www.rabbitmq.com/>
-# * March Hare: <http://rubymarchhare.info>
-# * Bunny - <https://github.com/ruby-amqp/bunny>
-class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
+module LogStash
+  module Inputs
+    class RabbitMQ < LogStash::Inputs::Threadable
+      include ::LogStash::PluginMixins::RabbitMQConnection
 
-  config_name "rabbitmq"
+      config_name("rabbitmq")
 
-  #
-  # Connection
-  #
+      # The name of the queue Logstash will consume events from.
+      config :queue, :validate => :string, :default => ""
 
-  # RabbitMQ server address
-  config :host, :validate => :string, :required => true
+      # Is this queue durable? (aka; Should it survive a broker restart?)
+      config :durable, :validate => :boolean, :default => false
 
-  # RabbitMQ port to connect on
-  config :port, :validate => :number, :default => 5672
+      # Should the queue be deleted on the broker when the last consumer
+      # disconnects? Set this option to `false` if you want the queue to remain
+      # on the broker, queueing up messages until a consumer comes along to
+      # consume them.
+      config :auto_delete, :validate => :boolean, :default => false
 
-  # RabbitMQ username
-  config :user, :validate => :string, :default => "guest"
+      # Is the queue exclusive? Exclusive queues can only be used by the connection
+      # that declared them and will be deleted when it is closed (e.g. due to a Logstash
+      # restart).
+      config :exclusive, :validate => :boolean, :default => false
 
-  # RabbitMQ password
-  config :password, :validate => :password, :default => "guest"
+      # Extra queue arguments as an array.
+      # To make a RabbitMQ queue mirrored, use: `{"x-ha-policy" => "all"}`
+      config :arguments, :validate => :array, :default => {}
 
-  # The vhost to use. If you don't know what this is, leave the default.
-  config :vhost, :validate => :string, :default => "/"
+      # Prefetch count. Number of messages to prefetch
+      config :prefetch_count, :validate => :number, :default => 256
 
-  # Enable or disable SSL
-  config :ssl, :validate => :boolean, :default => false
+      # Enable message acknowledgement
+      config :ack, :validate => :boolean, :default => true
 
-  # Validate SSL certificate
-  config :verify_ssl, :validate => :boolean, :default => false
+      # Passive queue creation? Useful for checking queue existance without modifying server state
+      config :passive, :validate => :boolean, :default => false
 
-  # Enable or disable logging
-  config :debug, :validate => :boolean, :default => false, :deprecated => "Use the logstash --debug flag for this instead."
+      # The name of the exchange to bind the queue to
+      config :exchange, :validate => :string
 
-
-
-  #
-  # Queue & Consumer
-  #
-
-  # The name of the queue Logstash will consume events from.
-  config :queue, :validate => :string, :default => ""
-
-  # Is this queue durable? (aka; Should it survive a broker restart?)
-  config :durable, :validate => :boolean, :default => false
-
-  # Should the queue be deleted on the broker when the last consumer
-  # disconnects? Set this option to `false` if you want the queue to remain
-  # on the broker, queueing up messages until a consumer comes along to
-  # consume them.
-  config :auto_delete, :validate => :boolean, :default => false
-
-  # Is the queue exclusive? Exclusive queues can only be used by the connection
-  # that declared them and will be deleted when it is closed (e.g. due to a Logstash
-  # restart).
-  config :exclusive, :validate => :boolean, :default => false
-
-  # Extra queue arguments as an array.
-  # To make a RabbitMQ queue mirrored, use: `{"x-ha-policy" => "all"}`
-  config :arguments, :validate => :array, :default => {}
-
-  # Prefetch count. Number of messages to prefetch
-  config :prefetch_count, :validate => :number, :default => 256
-
-  # Enable message acknowledgement
-  config :ack, :validate => :boolean, :default => true
-
-  # Passive queue creation? Useful for checking queue existance without modifying server state
-  config :passive, :validate => :boolean, :default => false
+      # The routing key to use when binding a queue to the exchange.
+      # This is only relevant for direct or topic exchanges.
+      #
+      # * Routing keys are ignored on fanout exchanges.
+      # * Wildcards are not valid on direct exchanges.
+      config :key, :validate => :string, :default => "logstash"
 
 
+      def register
+        connect!
 
-  #
-  # (Optional) Exchange binding
-  #
+        declare_queue!
+        bind_exchange!
+      end
 
-  # Optional.
-  #
-  # The name of the exchange to bind the queue to.
-  config :exchange, :validate => :string
+      def run(output_queue)
+        @output_queue = output_queue
+        consume!
+      end
 
-  # Optional.
-  #
-  # The routing key to use when binding a queue to the exchange.
-  # This is only relevant for direct or topic exchanges.
-  #
-  # * Routing keys are ignored on fanout exchanges.
-  # * Wildcards are not valid on direct exchanges.
-  config :key, :validate => :string, :default => "logstash"
+      def bind_exchange!
+        if @exchange
+          @hare_info.queue.bind(@exchange, :routing_key => @key)
+        end
+      end
 
+      def declare_queue!
+        @hare_info.queue = declare_queue()
+      end
 
-  def initialize(params)
-    params["codec"] = "json" if !params["codec"]
+      def declare_queue
+        @hare_info.channel.queue(@queue,
+                                 :durable     => @durable,
+                                 :auto_delete => @auto_delete,
+                                 :exclusive   => @exclusive,
+                                 :passive     => @passive,
+                                 :arguments   => @arguments)
+      end
 
-    super
+      def consume!
+        # we manually build a consumer here to be able to keep a reference to it
+        # in an @ivar even though we use a blocking version of HB::Queue#subscribe
+        @consumer = @hare_info.queue.build_consumer(:block => true) do |metadata, data|
+          @codec.decode(data) do |event|
+            decorate(event)
+            @output_queue << event if event
+          end
+          @hare_info.channel.ack(metadata.delivery_tag) if @ack
+        end
+
+        @hare_info.queue.subscribe_with(@consumer, :manual_ack => @ack, :block => true)
+      end
+
+      def stop
+        super
+        shutdown_consumer
+        close_connection
+      end
+
+      def shutdown_consumer
+        return unless @consumer
+        @consumer.gracefully_shut_down
+      end
+
+    end
   end
-
-  # Use March Hare on JRuby to avoid `IO#select` CPU spikes
-  # (see github.com/ruby-amqp/bunny/issues/95).
-  #
-  # On MRI, use Bunny.
-  #
-  # See http://rubybunny.info and http://rubymarchhare.info
-  # for the docs.
-  if RUBY_ENGINE == "jruby"
-    require "logstash/inputs/rabbitmq/march_hare"
-
-    include MarchHareImpl
-  else
-    require "logstash/inputs/rabbitmq/bunny"
-
-    include BunnyImpl
-  end
-end # class LogStash::Inputs::RabbitMQ
+end

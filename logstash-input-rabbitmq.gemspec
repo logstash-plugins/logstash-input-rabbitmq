@@ -20,15 +20,11 @@ Gem::Specification.new do |s|
 
   # Gem dependencies
   s.add_runtime_dependency "logstash-core", '>= 1.4.0', '< 2.0.0'
+  s.add_runtime_dependency "logstash-mixin-rabbitmq_connection", '>= 1.0.0', '< 2.0.0'
 
   s.add_runtime_dependency 'logstash-codec-json'
 
-  if RUBY_PLATFORM == 'java'
-    s.platform = RUBY_PLATFORM
-    s.add_runtime_dependency 'march_hare', ['~> 2.12.0']
-  else
-    s.add_runtime_dependency 'bunny', ['>= 1.6.0']
-  end
   s.add_development_dependency 'logstash-devutils'
+  s.add_development_dependency 'logstash-codec-plain'
 end
 
