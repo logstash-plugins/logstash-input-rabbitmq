@@ -46,7 +46,6 @@ class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
   config :debug, :validate => :boolean, :default => false, :deprecated => "Use the logstash --debug flag for this instead."
 
 
-
   #
   # Queue & Consumer
   #
@@ -81,7 +80,8 @@ class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
   # Passive queue creation? Useful for checking queue existance without modifying server state
   config :passive, :validate => :boolean, :default => false
 
-
+  # Include amqp headers as k/v pairs
+  config :include_headers, :validate => :boolean, :default => false
 
   #
   # (Optional) Exchange binding

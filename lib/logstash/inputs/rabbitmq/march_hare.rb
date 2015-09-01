@@ -112,6 +112,9 @@ class LogStash::Inputs::RabbitMQ
       @consumer = @q.build_consumer(:block => true) do |metadata, data|
         @codec.decode(data) do |event|
           decorate(event)
+	  metadata.headers.each do |header, value|
+            event[header] = value.respond_to?('toString') ? value.toString : value 
+         end if @include_headers
           @output_queue << event if event
         end
         @ch.ack(metadata.delivery_tag) if @ack
