@@ -18,6 +18,7 @@ class LogStash::Inputs::RabbitMQ
         :user  => @user,
         :automatic_recovery => false
       }
+      @settings[:timeout]   = @connection_timeout || MarchHare::ConnectionFactory::DEFAULT_CONNECTION_TIMEOUT
       @settings[:pass]      = @password.value if @password
       @settings[:tls]       = @ssl if @ssl
 

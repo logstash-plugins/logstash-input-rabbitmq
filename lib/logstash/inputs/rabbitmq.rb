@@ -45,7 +45,11 @@ class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
   # Enable or disable logging
   config :debug, :validate => :boolean, :default => false, :deprecated => "Use the logstash --debug flag for this instead."
 
+  # Maximum permissible size of a frame (in bytes) to negotiate with clients
+  config :session_frame_max, :validate => :number, :required => false
 
+  # The default connection timeout; zero means wait indefinitely
+  config :connection_timeout, :validate => :number, :required => false
 
   #
   # Queue & Consumer
