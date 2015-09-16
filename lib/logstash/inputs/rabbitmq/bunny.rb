@@ -30,6 +30,7 @@ class LogStash::Inputs::RabbitMQ
 
       @settings[:tls]        = @ssl if @ssl
       @settings[:verify_ssl] = @verify_ssl if @verify_ssl
+      @settings[:heartbeat] = @heartbeat
 
       proto                  = if @ssl
                                  "amqps"

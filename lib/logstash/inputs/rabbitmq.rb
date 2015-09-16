@@ -45,7 +45,8 @@ class LogStash::Inputs::RabbitMQ < LogStash::Inputs::Threadable
   # Enable or disable logging
   config :debug, :validate => :boolean, :default => false, :deprecated => "Use the logstash --debug flag for this instead."
 
-
+  # Heartbeat delay (optional, will default to rabbitmq server config). 
+  config :heartbeat, :validate => :number
 
   #
   # Queue & Consumer
