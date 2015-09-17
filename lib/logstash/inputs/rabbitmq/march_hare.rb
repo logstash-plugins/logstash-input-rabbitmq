@@ -112,6 +112,12 @@ class LogStash::Inputs::RabbitMQ
       @consumer = @q.build_consumer(:block => true) do |metadata, data|
         @codec.decode(data) do |event|
           decorate(event)
+          event['@metadata']={"routingKey"     => metadata.envelope.routingKey,
+                              "deliveryTag"    => metadata.envelope.deliveryTag,
+                              "redeliver"      => metadata.envelope.redeliver,
+                              "exchange"       => metadata.envelope.exchange,
+                              "amqpTimestamp"  => Time.at(metadata.properties.timestamp.getTime/1000),
+                              "consumerTag"    => metadata.consumer_tag}
           @output_queue << event if event
         end
         @ch.ack(metadata.delivery_tag) if @ack
