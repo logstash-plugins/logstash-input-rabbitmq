@@ -7,7 +7,7 @@ module LogStash
     class RabbitMQ < LogStash::Inputs::Threadable
       include ::LogStash::PluginMixins::RabbitMQConnection
 
-      config_name("rabbitmq")
+      config_name "rabbitmq"
 
       # The name of the queue Logstash will consume events from.
       config :queue, :validate => :string, :default => ""
