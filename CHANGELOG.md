@@ -1,3 +1,6 @@
+## 3.1.1
+ - Default codec setting should have been JSON
+
 ## 3.1.0
  - Fix broken prefetch count parameter
 

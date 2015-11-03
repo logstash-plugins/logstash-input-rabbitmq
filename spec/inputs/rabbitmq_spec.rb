@@ -46,6 +46,10 @@ describe LogStash::Inputs::RabbitMQ do
       instance.register
     end
 
+    it "should default the codec to JSON" do
+      expect(instance.codec).to be_a(LogStash::Codecs::JSON)
+    end
+
     describe "#connect!" do
       subject { hare_info }
 

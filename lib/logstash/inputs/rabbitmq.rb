@@ -9,6 +9,9 @@ module LogStash
 
       config_name "rabbitmq"
 
+      # The default codec for this plugin is JSON. You can override this to suit your particular needs however.
+      default :codec, "json"
+
       # The name of the queue Logstash will consume events from.
       config :queue, :validate => :string, :default => ""
 
