@@ -1,3 +1,6 @@
+## 3.1.0
+ - Fix broken prefetch count parameter
+
 ## 3.0.2
  - Bump dependency on logstash-mixin-rabbitmq_connection
 

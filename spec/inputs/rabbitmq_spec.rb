@@ -16,7 +16,8 @@ describe LogStash::Inputs::RabbitMQ do
     {
       "host" => host,
       "port" => port,
-      "queue" => queue
+      "queue" => queue,
+      "prefetch_count" => 123
     }
   }
   let(:instance) { klass.new(rabbitmq_settings) }
@@ -37,6 +38,7 @@ describe LogStash::Inputs::RabbitMQ do
       allow(connection).to receive(:on_unblocked)
       allow(channel).to receive(:exchange).and_return(exchange)
       allow(channel).to receive(:queue).and_return(queue)
+      allow(channel).to receive(:prefetch=)
 
       allow(queue).to receive(:build_consumer).with(:block => true)
       allow(queue).to receive(:subscribe_with).with(any_args)
@@ -49,6 +51,10 @@ describe LogStash::Inputs::RabbitMQ do
 
       it "should set the queue correctly" do
         expect(subject.queue).to eql(queue)
+      end
+
+      it "should set the prefetch value correctly" do
+        expect(channel).to have_received(:prefetch=).with(123)
       end
 
       context "with an exchange declared" do
@@ -107,6 +113,10 @@ describe "with a live server", :integration => true do
     it "should start, connect, and stop cleanly" do
       expect(instance.connected?).to be_truthy
     end
+  end
+
+  it "should have the correct prefetch value" do
+    expect(instance.instance_variable_get(:@hare_info).channel.prefetch).to eql(256)
   end
 
   describe "receiving a message with a queue specified" do

@@ -52,9 +52,9 @@ module LogStash
 
       def register
         connect!
-
         declare_queue!
         bind_exchange!
+        @hare_info.channel.prefetch = @prefetch_count
       end
 
       def run(output_queue)
