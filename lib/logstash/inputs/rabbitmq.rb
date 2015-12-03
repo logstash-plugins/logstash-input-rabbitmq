@@ -52,6 +52,12 @@ module LogStash
       # * Wildcards are not valid on direct exchanges.
       config :key, :validate => :string, :default => "logstash"
 
+      # TLS certificate path
+      config :tls_certificate_path, :validate => :string, :default => ""
+
+      # TLS certificate password
+      config :tls_certificate_password, :validate => :string, :default => ""
+
 
       def register
         connect!
