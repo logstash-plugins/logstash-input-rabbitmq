@@ -1,3 +1,5 @@
+# 3.1.2
+ - Upgrade march hare version to fix file perms issue
 ## 3.1.1
  - Default codec setting should have been JSON
 
