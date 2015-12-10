@@ -42,7 +42,7 @@ module LogStash
       # Passive queue creation? Useful for checking queue existance without modifying server state
       config :passive, :validate => :boolean, :default => false
 
-      # The name of the exchange to bind the queue to
+      # The name of the exchange to bind the queue to.
       config :exchange, :validate => :string
 
       # The routing key to use when binding a queue to the exchange.
@@ -52,12 +52,18 @@ module LogStash
       # * Wildcards are not valid on direct exchanges.
       config :key, :validate => :string, :default => "logstash"
 
-
       def register
         connect!
         declare_queue!
         bind_exchange!
         @hare_info.channel.prefetch = @prefetch_count
+      rescue => e
+        @logger.warn("Error while setting up connection for rabbitmq input! Will retry.",
+                     :message => e.message,
+                     :class => e.class.name,
+                     :location => e.backtrace.first)
+        sleep_for_retry
+        retry
       end
 
       def run(output_queue)
