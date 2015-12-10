@@ -30,7 +30,8 @@ describe LogStash::Inputs::RabbitMQ do
     let(:channel) { double("Channel") }
     let(:queue) { double("queue") }
 
-    def setup_mocks
+    # Doing this in a before block doesn't give us enough control over scope
+    before do
       allow(instance).to receive(:connect!).and_call_original
       allow(::MarchHare).to receive(:connect).and_return(connection)
       allow(connection).to receive(:create_channel).and_return(channel)
@@ -45,13 +46,6 @@ describe LogStash::Inputs::RabbitMQ do
       allow(queue).to receive(:bind).with(any_args)
     end
 
-    # Doing this in a before block doesn't give us enough control over scope
-    def register_instance
-      setup_mocks
-      instance.register
-    end
-
-
     it "should default the codec to JSON" do
       expect(instance.codec).to be_a(LogStash::Codecs::JSON)
     end
@@ -59,31 +53,32 @@ describe LogStash::Inputs::RabbitMQ do
     describe "#connect!" do
       subject { hare_info }
 
-      it "should set the queue correctly" do
-        register_instance
-        expect(subject.queue).to eql(queue)
-      end
+      context "without an exchange declared" do
+        before do
+          instance.register
+        end
 
-      it "should set the prefetch value correctly" do
-        register_instance
-        expect(channel).to have_received(:prefetch=).with(123)
+        it "should set the queue correctly" do
+          expect(subject.queue).to eql(queue)
+        end
+
+        it "should set the prefetch value correctly" do
+          expect(channel).to have_received(:prefetch=).with(123)
+        end
       end
 
       context "with an exchange declared" do
-        @manual_register = true
         let(:exchange) { double("exchange") }
         let(:key) { double("routing key") }
         let(:rabbitmq_settings) { super.merge("exchange" => exchange, "key" => key) }
 
         it "should bind to the exchange" do
-          register_instance
+          instance.register
           expect(queue).to have_received(:bind).with(exchange, :routing_key => key)
         end
 
         context "but not immediately available" do
           before do
-            setup_mocks
-
             i = 0
             allow(queue).to receive(:bind).with(any_args) do
               i += 1
