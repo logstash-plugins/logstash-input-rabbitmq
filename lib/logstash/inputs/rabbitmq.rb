@@ -102,7 +102,8 @@ module LogStash
         # that we rely on MarchHare to do the reconnection for us with auto_reconnect.
         # Unfortunately, while MarchHare does the reconnection work it won't re-subscribe the consumer
         # hence the logic below.
-        @consumer = @hare_info.queue.build_consumer() do |metadata, data|
+        @consumer = @hare_info.queue.build_consumer(:block => true,
+                                                    :on_cancellation => Proc.new { on_cancellation }) do |metadata, data|
           @codec.decode(data) do |event|
             decorate(event)
             @output_queue << event if event
@@ -135,6 +136,10 @@ module LogStash
         @consumer.gracefully_shut_down
       end
 
+      def on_cancellation
+        @logger.info("Received basic.cancel from #{rabbitmq_settings[:host]}, shutting down.")
+        stop
+      end
     end
   end
 end
