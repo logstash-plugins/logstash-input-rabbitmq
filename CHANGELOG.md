@@ -1,4 +1,6 @@
-# 3.1.2
+## 3.1.3
+ - Fix a spec that shouldn't have broken with LS2.2
+## 3.1.2
  - Upgrade march hare version to fix file perms issue
 ## 3.1.1
  - Default codec setting should have been JSON
@@ -10,7 +12,7 @@
  - Bump dependency on logstash-mixin-rabbitmq_connection
 
 ## 3.0.0
- - Plugins were updated to follow the new shutdown semantic, this mainly allows Logstash to instruct input plugins to terminate gracefully, 
+ - Plugins were updated to follow the new shutdown semantic, this mainly allows Logstash to instruct input plugins to terminate gracefully,
    instead of using Thread.raise on the plugins' threads. Ref: https://github.com/elastic/logstash/pull/3895
  - Dependency on logstash-core update to 2.0
 
