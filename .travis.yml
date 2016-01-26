@@ -1,0 +1,8 @@
+sudo: false
+language: ruby
+cache: bundler
+services:
+  - rabbitmq
+rvm:
+  - jruby-1.7.24
+script: bundle exec rspec spec && bundle exec rspec spec --tag integration
