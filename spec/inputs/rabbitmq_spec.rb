@@ -68,8 +68,8 @@ describe LogStash::Inputs::RabbitMQ do
       end
 
       context "with an exchange declared" do
-        let(:exchange) { double("exchange") }
-        let(:key) { double("routing key") }
+        let(:exchange) { "exchange" }
+        let(:key) { "routing key" }
         let(:rabbitmq_settings) { super.merge("exchange" => exchange, "key" => key) }
 
         it "should bind to the exchange" do
