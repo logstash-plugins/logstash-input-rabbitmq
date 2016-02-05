@@ -1,3 +1,6 @@
+## 3.1.4
+ - Fix a bug where this plugin would not properly reconnect if it lost its connection to the server while the connection would re-establish itself, the queue subscription would not
+
 ## 3.1.3
  - Fix a spec that shouldn't have broken with LS2.2
 ## 3.1.2

@@ -91,6 +91,20 @@ describe LogStash::Inputs::RabbitMQ do
             expect(queue).to have_received(:bind).with(any_args).twice()
           end
         end
+
+        context "initially unable to subscribe" do
+          before do
+            i = 0
+            allow(queue).to receive(:subscribe_with).with(any_args) do
+              i += 1
+              raise "sub error" if i == 1
+            end
+
+            it "should retry the subscribe" do
+              expect(queue).to have_receive(:subscribe_with).twice()
+            end
+          end
+        end
       end
     end
   end
