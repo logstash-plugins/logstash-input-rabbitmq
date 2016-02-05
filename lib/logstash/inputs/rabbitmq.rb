@@ -52,6 +52,10 @@ module LogStash
       # * Wildcards are not valid on direct exchanges.
       config :key, :validate => :string, :default => "logstash"
 
+      # Amount of time in seconds to wait after a failed subscription request
+      # before retrying. Subscribes can fail if the server goes away and then comes back
+      config :subscription_retry_interval_seconds, :validate => :number, :required => true, :default => 5
+
       def register
         connect!
         declare_queue!
@@ -93,15 +97,29 @@ module LogStash
       def consume!
         # we manually build a consumer here to be able to keep a reference to it
         # in an @ivar even though we use a blocking version of HB::Queue#subscribe
-        @consumer = @hare_info.queue.build_consumer(:block => true) do |metadata, data|
-          @codec.decode(data) do |event|
-            decorate(event)
-            @output_queue << event if event
-          end
-          @hare_info.channel.ack(metadata.delivery_tag) if @ack
-        end
+        loop do
+          begin
+            @consumer = @hare_info.queue.build_consumer(:block => true) do |metadata, data|
+              @codec.decode(data) do |event|
+                decorate(event)
+                @output_queue << event if event
+              end
+              @hare_info.channel.ack(metadata.delivery_tag) if @ack
+            end
 
-        @hare_info.queue.subscribe_with(@consumer, :manual_ack => @ack, :block => true)
+            @logger.info("Will subscribe with consumer", :config => config)
+            @hare_info.queue.subscribe_with(@consumer, :manual_ack => @ack, :block => true)
+            break if stop?
+            @logger.warn("Queue subscription ended! Will retry in #{@subscription_retry_interval_seconds}s", :config => config)
+
+            @consumer.gracefully_shut_down # Try to clean up gracefully
+          rescue MarchHare::Exception => e
+            @logger.warn("Error re-subscribing to queue!", :config => config, :message => e.message, :class => e.class.name)
+          end
+
+          Stud.stoppable_sleep(@subscription_retry_interval_seconds) { stop? }
+          break if stop? # In case an error was hit before the break above was hit
+        end
       end
 
       def stop
