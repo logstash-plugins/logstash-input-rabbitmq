@@ -107,11 +107,15 @@ module LogStash
               @hare_info.channel.ack(metadata.delivery_tag) if @ack
             end
 
-            @logger.info("Will subscribe with consumer", :config => config)
-            @hare_info.queue.subscribe_with(@consumer, :manual_ack => @ack, :block => true)
-            break if stop?
-            @logger.warn("Queue subscription ended! Will retry in #{@subscription_retry_interval_seconds}s", :config => config)
+            if @hare_info.connection.connected?
+              @logger.info("Will subscribe with consumer", :config => config)
+              @hare_info.queue.subscribe_with(@consumer, :manual_ack => @ack, :block => true)
+              @logger.warn("Queue subscription ended! Will retry in #{@subscription_retry_interval_seconds}s", :config => config)
+            else
+              @logger.info("RabbitMQ connection down, will wait to retry subscription", :config => config)
+            end
 
+            break if stop?
             @consumer.gracefully_shut_down # Try to clean up gracefully
           rescue MarchHare::Exception => e
             @logger.warn("Error re-subscribing to queue!", :config => config, :message => e.message, :class => e.class.name)
