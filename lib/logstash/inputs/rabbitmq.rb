@@ -97,6 +97,11 @@ module LogStash
       def consume!
         # we manually build a consumer here to be able to keep a reference to it
         # in an @ivar even though we use a blocking version of HB::Queue#subscribe
+
+        # The logic here around resubscription might seem strange, but its predicated on the fact
+        # that we rely on MarchHare to do the reconnection for us with auto_reconnect.
+        # Unfortunately, while MarchHare does the reconnection work it won't re-subscribe the consumer
+        # hence the logic below.
         loop do
           begin
             @consumer = @hare_info.queue.build_consumer(:block => true) do |metadata, data|
