@@ -112,7 +112,7 @@ end
 
 describe "with a live server", :integration => true do
   let(:klass) { LogStash::Inputs::RabbitMQ }
-  let(:config) { {"host" => "127.0.0.1"} }
+  let(:config) { {"host" => "127.0.0.1", "auto_delete" => true } }
   let(:instance) { klass.new(config) }
   let(:hare_info) { instance.instance_variable_get(:@hare_info) }
   let(:output_queue) { Queue.new }
@@ -168,8 +168,8 @@ describe "with a live server", :integration => true do
   describe "receiving a message with a queue specified" do
     let(:config) { super.merge("queue" => queue_name) }
     let(:event) { output_queue.pop }
-    let(:queue) { test_channel.queue(queue_name) }
-    let(:queue_name) { "foo_queue" }
+    let(:queue) { test_channel.queue(queue_name, :auto_delete => true) }
+    let(:queue_name) { "logstash-input-rabbitmq-#{rand(0xFFFFFFFF)}" }
 
     context "when the message has a payload but no message headers" do
       before do
@@ -245,7 +245,6 @@ describe "with a live server", :integration => true do
   end
 
   describe LogStash::Inputs::RabbitMQ do
-    let(:config) { super.merge("queue" => "foo_queue") }
     it_behaves_like "an interruptible input plugin" do
 
     end
