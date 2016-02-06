@@ -134,7 +134,7 @@ describe "with a live server", :integration => true do
     # Extra time to make sure the consumer can attach
     # Without this there's a chance the shutdown code will execute
     # before consumption begins. This is tricky to do more elegantly
-    sleep 1
+    sleep 4
   end
 
   let(:test_connection) { MarchHare.connect(instance.send(:rabbitmq_settings)) }
