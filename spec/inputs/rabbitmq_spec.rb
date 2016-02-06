@@ -171,7 +171,7 @@ describe "with a live server", :integration => true do
     let(:queue) { test_channel.queue(queue_name) }
     let(:queue_name) { "foo_queue" }
 
-    context "when the message has a payload" do
+    context "when the message has a payload but no message headers" do
       before do
         queue.publish(message)
       end
@@ -180,6 +180,66 @@ describe "with a live server", :integration => true do
 
       it "should process the message and store the payload" do
         expect(event["message"]).to eql(message)
+      end
+
+      it "should save an empty message header hash" do
+        expect(event).to include("@metadata")
+        expect(event["@metadata"]).to include("rabbitmq_headers")
+        expect(event["@metadata"]["rabbitmq_headers"]).to eq({})
+      end
+    end
+
+    context "when message properties are available" do
+      before do
+        # Don't test every single property but select a few with
+        # different characteristics to get sufficient coverage.
+        queue.publish("",
+                      :properties => {
+                        :app_id    => app_id,
+                        :timestamp => Java::JavaUtil::Date.new(epoch * 1000),
+                        :priority  => priority,
+                      })
+      end
+
+      let(:app_id) { "myapplication" }
+      # Randomize the epoch we test with but limit its range to signed
+      # ints to not assume all protocols and libraries involved use
+      # unsigned ints for epoch values.
+      let(:epoch) { rand(0x7FFFFFFF) }
+      let(:priority) { 5 }
+
+      it "should save message properties into a @metadata field" do
+        expect(event).to include("@metadata")
+        expect(event["@metadata"]).to include("rabbitmq_properties")
+
+        props = event["@metadata"]["rabbitmq_properties"]
+        expect(props["app-id"]).to eq(app_id)
+        expect(props["delivery-mode"]).to eq(1)
+        expect(props["exchange"]).to eq("")
+        expect(props["priority"]).to eq(priority)
+        expect(props["routing-key"]).to eq(queue_name)
+        expect(props["timestamp"]).to eq(epoch)
+      end
+    end
+
+    context "when message headers are available" do
+      before do
+        queue.publish("", :properties => { :headers => headers })
+      end
+
+      let (:headers) {
+        {
+          "arrayvalue"  => [true, 123, "foo"],
+          "boolvalue"   => true,
+          "intvalue"    => 123,
+          "stringvalue" => "foo",
+        }
+      }
+
+      it "should save message headers into a @metadata field" do
+        expect(event).to include("@metadata")
+        expect(event["@metadata"]).to include("rabbitmq_headers")
+        expect(event["@metadata"]["rabbitmq_headers"]).to include(headers)
       end
     end
   end

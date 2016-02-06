@@ -7,6 +7,37 @@ module LogStash
     class RabbitMQ < LogStash::Inputs::Threadable
       include ::LogStash::PluginMixins::RabbitMQConnection
 
+      # The properties to extract from each message and store in a
+      # @metadata field.
+      #
+      # Technically the exchange, redeliver, and routing-key
+      # properties belong to the envelope and not the message but we
+      # ignore that distinction here. However, we extract the
+      # headers separately via get_headers even though the header
+      # table technically is a message property.
+      #
+      # Freezing all strings so that code modifying the event's
+      # @metadata field can't touch them.
+      MESSAGE_PROPERTIES = [
+        "app-id",
+        "cluster-id",
+        "consumer-tag",
+        "content-encoding",
+        "content-type",
+        "correlation-id",
+        "delivery-mode",
+        "exchange",
+        "expiration",
+        "message-id",
+        "priority",
+        "redeliver",
+        "reply-to",
+        "routing-key",
+        "timestamp",
+        "type",
+        "user-id",
+      ].map { |s| s.freeze }.freeze
+
       config_name "rabbitmq"
 
       # The default codec for this plugin is JSON. You can override this to suit your particular needs however.
@@ -106,6 +137,8 @@ module LogStash
                                                     :on_cancellation => Proc.new { on_cancellation }) do |metadata, data|
           @codec.decode(data) do |event|
             decorate(event)
+            event["@metadata"]["rabbitmq_headers"] = get_headers(metadata)
+            event["@metadata"]["rabbitmq_properties"] = get_properties(metadata)
             @output_queue << event if event
           end
           @hare_info.channel.ack(metadata.delivery_tag) if @ack
@@ -139,6 +172,55 @@ module LogStash
       def on_cancellation
         @logger.info("Received basic.cancel from #{rabbitmq_settings[:host]}, shutting down.")
         stop
+      end
+
+      private
+
+      # ByteArrayLongString is a private static inner class which
+      # can't be access via the regular Java::SomeNameSpace::Classname
+      # notation. See https://github.com/jruby/jruby/issues/3333.
+      ByteArrayLongString = JavaUtilities::get_proxy_class('com.rabbitmq.client.impl.LongStringHelper$ByteArrayLongString')
+
+      def get_header_value(value)
+        # Two kinds of values require exceptional treatment:
+        #
+        # String values are instances of
+        # com.rabbitmq.client.impl.LongStringHelper.ByteArrayLongString
+        # and we don't want to propagate those.
+        #
+        # List values are java.util.ArrayList objects and we need to
+        # recurse into them to convert any nested strings values.
+        if value.class == Java::JavaUtil::ArrayList
+          value.map{|item| get_header_value(item) }
+        elsif value.class == ByteArrayLongString
+          value.toString
+        else
+          value
+        end
+      end
+
+      private
+      def get_headers(metadata)
+        if !metadata.headers.nil?
+          Hash[metadata.headers.map {|k, v| [k, get_header_value(v)]}]
+        else
+          {}
+        end
+      end
+
+      private
+      def get_properties(metadata)
+        MESSAGE_PROPERTIES.reduce({}) do |acc, name|
+          # The method names obviously can't contain hyphens.
+          value = metadata.send(name.gsub("-", "_"))
+          if value
+            # The AMQP 0.9.1 timestamp field only has second resolution
+            # so storing milliseconds serves no purpose and might give
+            # the incorrect impression of a higher resolution.
+            acc[name] = name != "timestamp" ? value : value.getTime / 1000
+          end
+          acc
+        end
       end
     end
   end
