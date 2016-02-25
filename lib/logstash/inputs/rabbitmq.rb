@@ -102,32 +102,25 @@ module LogStash
         # that we rely on MarchHare to do the reconnection for us with auto_reconnect.
         # Unfortunately, while MarchHare does the reconnection work it won't re-subscribe the consumer
         # hence the logic below.
-        loop do
-          begin
-            @consumer = @hare_info.queue.build_consumer(:block => true) do |metadata, data|
-              @codec.decode(data) do |event|
-                decorate(event)
-                @output_queue << event if event
-              end
-              @hare_info.channel.ack(metadata.delivery_tag) if @ack
-            end
-
-            if @hare_info.connection.connected?
-              @logger.info("Will subscribe with consumer", :config => config)
-              @hare_info.queue.subscribe_with(@consumer, :manual_ack => @ack, :block => true)
-              @logger.warn("Queue subscription ended! Will retry in #{@subscription_retry_interval_seconds}s", :config => config)
-            else
-              @logger.info("RabbitMQ connection down, will wait to retry subscription", :config => config)
-            end
-
-            break if stop?
-            @consumer.gracefully_shut_down # Try to clean up gracefully
-          rescue MarchHare::Exception => e
-            @logger.warn("Error re-subscribing to queue!", :config => config, :message => e.message, :class => e.class.name)
+        @consumer = @hare_info.queue.build_consumer() do |metadata, data|
+          @codec.decode(data) do |event|
+            decorate(event)
+            @output_queue << event if event
           end
+          @hare_info.channel.ack(metadata.delivery_tag) if @ack
+        end
 
-          Stud.stoppable_sleep(@subscription_retry_interval_seconds) { stop? }
-          break if stop? # In case an error was hit before the break above was hit
+        begin
+          @hare_info.queue.subscribe_with(@consumer, :manual_ack => @ack)
+        rescue MarchHare::Exception => e
+          @logger.warn("Could not subscribe to queue! Will retry in #{@subscription_retry_interval_seconds} seconds", :queue => @queue)
+
+          sleep @subscription_retry_interval_seconds
+          retry
+        end
+
+        while !stop?
+          sleep 1
         end
       end
 

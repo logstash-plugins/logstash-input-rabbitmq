@@ -1,3 +1,6 @@
+## 3.1.5
+ - Fix a bug where when reconnecting a duplicate consumer would be created
+
 ## 3.1.4
  - Fix a bug where this plugin would not properly reconnect if it lost its connection to the server while the connection would re-establish itself, the queue subscription would not
 
