@@ -166,16 +166,21 @@ describe "with a live server", :integration => true do
   end
 
   describe "receiving a message with a queue specified" do
-    let(:queue_name) { "foo_queue" }
     let(:config) { super.merge("queue" => queue_name) }
+    let(:event) { output_queue.pop }
+    let(:queue) { test_channel.queue(queue_name) }
+    let(:queue_name) { "foo_queue" }
 
-    it "should process the message" do
-      message = "Foo Message"
-      q = test_channel.queue(queue_name)
-      q.publish(message)
+    context "when the message has a payload" do
+      before do
+        queue.publish(message)
+      end
 
-      event = output_queue.pop
-      expect(event["message"]).to eql(message)
+      let(:message) { "Foo Message" }
+
+      it "should process the message and store the payload" do
+        expect(event["message"]).to eql(message)
+      end
     end
   end
 
