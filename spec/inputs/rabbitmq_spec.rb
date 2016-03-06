@@ -112,7 +112,7 @@ end
 
 describe "with a live server", :integration => true do
   let(:klass) { LogStash::Inputs::RabbitMQ }
-  let(:config) { {"host" => "127.0.0.1", "auto_delete" => true } }
+  let(:config) { {"host" => "127.0.0.1", "auto_delete" => true, "codec" => "plain" } }
   let(:instance) { klass.new(config) }
   let(:hare_info) { instance.instance_variable_get(:@hare_info) }
   let(:output_queue) { Queue.new }
