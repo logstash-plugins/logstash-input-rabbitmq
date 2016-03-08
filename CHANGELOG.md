@@ -1,3 +1,9 @@
+## 3.2.0
+ - The properties and headers of the messages are now saved in the [@metadata][rabbitmq_headers] and [@metadata][rabbitmq_properties] fields.
+ - Logstash now shuts down if the server sends a basic.cancel method.
+ - Reinstating the overview documentation that was lost in 3.0.0 and updating it to be clearer.
+ - Internal: Various spec improvements that decrease flakiness and eliminate the queue littering of the integration test RabbitMQ instance.
+
 ## 3.1.5
  - Fix a bug where when reconnecting a duplicate consumer would be created
 
