@@ -4,6 +4,17 @@ require 'logstash/inputs/threadable'
 
 module LogStash
   module Inputs
+    # Pull events from a RabbitMQ exchange.
+    #
+    # The default settings will create an entirely transient queue and listen for all messages by default.
+    # If you need durability or any other advanced settings, please set the appropriate options
+    #
+    # This has been tested with Bunny 0.9.x, which supports RabbitMQ 2.x and 3.x. You can
+    # find links to both here:
+    #
+    # * RabbitMQ - <http://www.rabbitmq.com/>
+    # * March Hare: <http://rubymarchhare.info>
+    # * Bunny - <https://github.com/ruby-amqp/bunny>
     class RabbitMQ < LogStash::Inputs::Threadable
       include ::LogStash::PluginMixins::RabbitMQConnection
 
