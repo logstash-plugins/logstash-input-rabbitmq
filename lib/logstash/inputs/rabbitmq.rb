@@ -4,17 +4,56 @@ require 'logstash/inputs/threadable'
 
 module LogStash
   module Inputs
-    # Pull events from a RabbitMQ exchange.
+    # Pull events from a http://www.rabbitmq.com/[RabbitMQ] queue.
     #
     # The default settings will create an entirely transient queue and listen for all messages by default.
     # If you need durability or any other advanced settings, please set the appropriate options
     #
-    # This has been tested with Bunny 0.9.x, which supports RabbitMQ 2.x and 3.x. You can
-    # find links to both here:
+    # This plugin uses the http://rubymarchhare.info/[March Hare] library
+    # for interacting with the RabbitMQ server. Most configuration options
+    # map directly to standard RabbitMQ and AMQP concepts. The
+    # https://www.rabbitmq.com/amqp-0-9-1-reference.html[AMQP 0-9-1 reference guide]
+    # and other parts of the RabbitMQ documentation are useful for deeper
+    # understanding.
     #
-    # * RabbitMQ - <http://www.rabbitmq.com/>
-    # * March Hare: <http://rubymarchhare.info>
-    # * Bunny - <https://github.com/ruby-amqp/bunny>
+    # The properties of messages received will be stored in the
+    # `[@metadata][rabbitmq_properties]` field. The following
+    # properties may be available (in most cases dependent on whether
+    # they were set by the sender):
+    #
+    # * app-id
+    # * cluster-id
+    # * consumer-tag
+    # * content-encoding
+    # * content-type
+    # * correlation-id
+    # * delivery-mode
+    # * exchange
+    # * expiration
+    # * message-id
+    # * priority
+    # * redeliver
+    # * reply-to
+    # * routing-key
+    # * timestamp
+    # * type
+    # * user-id
+    #
+    # For example, to get the RabbitMQ message's timestamp property
+    # into the Logstash event's `@timestamp` field, use the date
+    # filter to parse the `[@metadata][rabbitmq_properties][timestamp]`
+    # field:
+    # [source,ruby]
+    #     filter {
+    #       if [@metadata][rabbitmq_properties][timestamp] {
+    #         date {
+    #           match => ["[@metadata][rabbitmq_properties][timestamp]", "UNIX"]
+    #         }
+    #       }
+    #     }
+    #
+    # Additionally, any message headers will be saved in the
+    # `[@metadata][rabbitmq_headers]` field.
     class RabbitMQ < LogStash::Inputs::Threadable
       include ::LogStash::PluginMixins::RabbitMQConnection
 
@@ -29,6 +68,9 @@ module LogStash
       #
       # Freezing all strings so that code modifying the event's
       # @metadata field can't touch them.
+      #
+      # If updating this list, remember to update the documentation
+      # above too.
       MESSAGE_PROPERTIES = [
         "app-id",
         "cluster-id",
@@ -54,7 +96,9 @@ module LogStash
       # The default codec for this plugin is JSON. You can override this to suit your particular needs however.
       default :codec, "json"
 
-      # The name of the queue Logstash will consume events from.
+      # The name of the queue Logstash will consume events from. If
+      # left empty, a transient queue with an randomly chosen name
+      # will be created.
       config :queue, :validate => :string, :default => ""
 
       # Is this queue durable? (aka; Should it survive a broker restart?)
@@ -75,13 +119,24 @@ module LogStash
       # To make a RabbitMQ queue mirrored, use: `{"x-ha-policy" => "all"}`
       config :arguments, :validate => :array, :default => {}
 
-      # Prefetch count. Number of messages to prefetch
+      # Prefetch count. If acknowledgements are enabled with the `ack`
+      # option, specifies the number of outstanding unacknowledged
+      # messages allowed. With acknowledgemnts disabled this setting
+      # has no effect.
       config :prefetch_count, :validate => :number, :default => 256
 
-      # Enable message acknowledgement
+      # Enable message acknowledgements. With acknowledgements
+      # messages fetched by Logstash but not yet sent into the
+      # Logstash pipeline will be requeued by the server if Logstash
+      # shuts down. Acknowledgements will however hurt the message
+      # throughput.
       config :ack, :validate => :boolean, :default => true
 
-      # Passive queue creation? Useful for checking queue existance without modifying server state
+      # If true the queue will be passively declared, meaning it must
+      # already exist on the server. To have Logstash create the queue
+      # if necessary leave this option as false. If actively declaring
+      # a queue that already exists, the queue options for this plugin
+      # (durable etc) must match those of the existing queue.
       config :passive, :validate => :boolean, :default => false
 
       # The name of the exchange to bind the queue to.
@@ -95,7 +150,7 @@ module LogStash
       config :key, :validate => :string, :default => "logstash"
 
       # Amount of time in seconds to wait after a failed subscription request
-      # before retrying. Subscribes can fail if the server goes away and then comes back
+      # before retrying. Subscribes can fail if the server goes away and then comes back.
       config :subscription_retry_interval_seconds, :validate => :number, :required => true, :default => 5
 
       def register
