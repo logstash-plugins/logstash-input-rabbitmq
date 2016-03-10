@@ -72,9 +72,22 @@ describe LogStash::Inputs::RabbitMQ do
         let(:key) { "routing key" }
         let(:rabbitmq_settings) { super.merge("exchange" => exchange, "key" => key) }
 
-        it "should bind to the exchange" do
-          instance.register
-          expect(queue).to have_received(:bind).with(exchange, :routing_key => key)
+        before do
+          allow(instance).to receive(:declare_exchange!)
+        end
+
+        context "on register" do
+          before do
+            instance.register
+          end
+
+          it "should bind to the exchange" do
+            expect(queue).to have_received(:bind).with(exchange, :routing_key => key)
+          end
+
+          it "should declare the exchange" do
+            expect(instance).to have_received(:declare_exchange!)
+          end
         end
 
         context "but not immediately available" do
@@ -165,15 +178,21 @@ describe "with a live server", :integration => true do
     expect(instance.instance_variable_get(:@hare_info).channel.prefetch).to eql(256)
   end
 
-  describe "receiving a message with a queue specified" do
-    let(:config) { super.merge("queue" => queue_name) }
+  describe "receiving a message with a queue + exchange specified" do
+    let(:config) { super.merge("queue" => queue_name, "exchange" => exchange_name, "exchange_type" => "fanout") }
     let(:event) { output_queue.pop }
-    let(:queue) { test_channel.queue(queue_name, :auto_delete => true) }
+    let(:exchange) { test_channel.exchange(exchange_name, :type => "fanout") }
+    let(:exchange_name) { "logstash-input-rabbitmq-#{rand(0xFFFFFFFF)}" }
+    #let(:queue) { test_channel.queue(queue_name, :auto_delete => true) }
     let(:queue_name) { "logstash-input-rabbitmq-#{rand(0xFFFFFFFF)}" }
+
+    after do
+      exchange.delete
+    end
 
     context "when the message has a payload but no message headers" do
       before do
-        queue.publish(message)
+        exchange.publish(message)
       end
 
       let(:message) { "Foo Message" }
@@ -193,7 +212,7 @@ describe "with a live server", :integration => true do
       before do
         # Don't test every single property but select a few with
         # different characteristics to get sufficient coverage.
-        queue.publish("",
+        exchange.publish("",
                       :properties => {
                         :app_id    => app_id,
                         :timestamp => Java::JavaUtil::Date.new(epoch * 1000),
@@ -224,7 +243,7 @@ describe "with a live server", :integration => true do
 
     context "when message headers are available" do
       before do
-        queue.publish("", :properties => { :headers => headers })
+        exchange.publish("", :properties => { :headers => headers })
       end
 
       let (:headers) {
@@ -245,8 +264,6 @@ describe "with a live server", :integration => true do
   end
 
   describe LogStash::Inputs::RabbitMQ do
-    it_behaves_like "an interruptible input plugin" do
-
-    end
+    it_behaves_like "an interruptible input plugin"
   end
 end

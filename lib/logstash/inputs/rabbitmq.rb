@@ -142,6 +142,9 @@ module LogStash
       # The name of the exchange to bind the queue to.
       config :exchange, :validate => :string
 
+      # The type of the exchange to bind to
+      config :exchange_type, :validate => :string
+
       # The routing key to use when binding a queue to the exchange.
       # This is only relevant for direct or topic exchanges.
       #
@@ -174,6 +177,7 @@ module LogStash
 
       def bind_exchange!
         if @exchange
+          @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable)
           @hare_info.queue.bind(@exchange, :routing_key => @key)
         end
       end
