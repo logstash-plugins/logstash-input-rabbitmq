@@ -2,6 +2,7 @@
 require "logstash/devutils/rspec/spec_helper"
 require "logstash/inputs/rabbitmq"
 require "thread"
+require 'logstash/event'
 
 Thread.abort_on_exception = true
 
