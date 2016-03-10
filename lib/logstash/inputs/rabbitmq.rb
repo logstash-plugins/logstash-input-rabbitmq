@@ -199,8 +199,7 @@ module LogStash
         # that we rely on MarchHare to do the reconnection for us with auto_reconnect.
         # Unfortunately, while MarchHare does the reconnection work it won't re-subscribe the consumer
         # hence the logic below.
-        @consumer = @hare_info.queue.build_consumer(:block => true,
-                                                    :on_cancellation => Proc.new { on_cancellation }) do |metadata, data|
+        @consumer = @hare_info.queue.build_consumer(:on_cancellation => Proc.new { on_cancellation }) do |metadata, data|
           @codec.decode(data) do |event|
             decorate(event)
             event["@metadata"]["rabbitmq_headers"] = get_headers(metadata)
