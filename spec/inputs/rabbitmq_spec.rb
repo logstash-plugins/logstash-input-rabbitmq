@@ -234,7 +234,7 @@ describe "with a live server", :integration => true do
         props = event["@metadata"]["rabbitmq_properties"]
         expect(props["app-id"]).to eq(app_id)
         expect(props["delivery-mode"]).to eq(1)
-        expect(props["exchange"]).to eq("")
+        expect(props["exchange"]).to eq(exchange_name)
         expect(props["priority"]).to eq(priority)
         expect(props["routing-key"]).to eq(queue_name)
         expect(props["timestamp"]).to eq(epoch)
