@@ -1,6 +1,7 @@
 # encoding: utf-8
 require 'logstash/plugin_mixins/rabbitmq_connection'
 require 'logstash/inputs/threadable'
+require 'logstash/event'
 
 module LogStash
   module Inputs
