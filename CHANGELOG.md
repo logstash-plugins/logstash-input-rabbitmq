@@ -1,3 +1,8 @@
+## 3.3.0
+ - Fix a regression in 3.2.0 that reinstated behavior that duplicated consumers
+ - Always declare exchanges used, the exchange now need not exist before LS starts
+ - Allow a precise specification of the exchange type
+
 ## 3.2.0
  - The properties and headers of the messages are now saved in the [@metadata][rabbitmq_headers] and [@metadata][rabbitmq_properties] fields.
  - Logstash now shuts down if the server sends a basic.cancel method.
