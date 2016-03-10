@@ -236,7 +236,7 @@ describe "with a live server", :integration => true do
         expect(props["delivery-mode"]).to eq(1)
         expect(props["exchange"]).to eq(exchange_name)
         expect(props["priority"]).to eq(priority)
-        expect(props["routing-key"]).to eq(queue_name)
+        expect(props["routing-key"]).to eq("")
         expect(props["timestamp"]).to eq(epoch)
       end
     end
