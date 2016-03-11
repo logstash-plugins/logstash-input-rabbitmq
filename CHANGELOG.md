@@ -1,5 +1,10 @@
-# 3.3.1
+## 3.3.2
+ - Ensure the consumer is done processing messages before closing channel. Fixes shutdown errors.
+ - Improve performance with batch ACKs + internal queue
+
+## 3.3.1
   - New dependency requirements for logstash-core for the 5.0 release
+
 ## 3.3.0
  - Fix a regression in 3.2.0 that reinstated behavior that duplicated consumers
  - Always declare exchanges used, the exchange now need not exist before LS starts

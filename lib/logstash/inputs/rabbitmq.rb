@@ -229,19 +229,24 @@ module LogStash
       end
 
       def stop
-        super
         shutdown_consumer
         close_connection
       end
 
       def shutdown_consumer
         return unless @consumer
-        @consumer.gracefully_shut_down
+        @hare_info.channel.basic_cancel(@consumer.consumer_tag)
+        until @consumer.terminated?
+          @logger.info("Waiting for rabbitmq consumer to terminate before stopping!", :params => self.params)
+          sleep 1
+        end
       end
 
       def on_cancellation
-        @logger.info("Received basic.cancel from #{rabbitmq_settings[:host]}, shutting down.")
-        stop
+        if !stop? # If this isn't already part of a regular stop
+          @logger.info("Received basic.cancel from #{rabbitmq_settings[:host]}, shutting down.")
+          stop
+        end
       end
 
       private
