@@ -71,7 +71,7 @@ describe LogStash::Inputs::RabbitMQ do
       context "with an exchange declared" do
         let(:exchange) { "exchange" }
         let(:key) { "routing key" }
-        let(:rabbitmq_settings) { super.merge("exchange" => exchange, "key" => key) }
+        let(:rabbitmq_settings) { super.merge("exchange" => exchange, "key" => key, "exchange_type" => "fanout") }
 
         before do
           allow(instance).to receive(:declare_exchange!)
@@ -180,7 +180,7 @@ describe "with a live server", :integration => true do
   end
 
   describe "receiving a message with a queue + exchange specified" do
-    let(:config) { super.merge("queue" => queue_name, "exchange" => exchange_name, "exchange_type" => "fanout") }
+    let(:config) { super.merge("queue" => queue_name, "exchange" => exchange_name, "exchange_type" => "fanout", "metadata_enabled" => true) }
     let(:event) { output_queue.pop }
     let(:exchange) { test_channel.exchange(exchange_name, :type => "fanout") }
     let(:exchange_name) { "logstash-input-rabbitmq-#{rand(0xFFFFFFFF)}" }

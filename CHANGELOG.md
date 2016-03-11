@@ -1,6 +1,7 @@
-## 3.3.2
+## 4.0.0
  - Ensure the consumer is done processing messages before closing channel. Fixes shutdown errors.
- - Improve performance with batch ACKs + internal queue
+ - Use an internal queue + separate thread to accelerate processing
+ - Disable metadata insertion by default, this slows things down majorly
 
 ## 3.3.1
   - New dependency requirements for logstash-core for the 5.0 release
