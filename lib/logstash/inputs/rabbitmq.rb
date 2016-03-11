@@ -2,6 +2,8 @@
 require 'logstash/plugin_mixins/rabbitmq_connection'
 require 'logstash/inputs/threadable'
 require 'logstash/event'
+java_import java.util.concurrent.ArrayBlockingQueue
+java_import java.util.concurrent.TimeUnit
 
 module LogStash
   module Inputs
@@ -18,8 +20,9 @@ module LogStash
     # understanding.
     #
     # The properties of messages received will be stored in the
-    # `[@metadata][rabbitmq_properties]` field. The following
-    # properties may be available (in most cases dependent on whether
+    # `[@metadata][rabbitmq_properties]` field if the `@metadata_enabled` setting is checked.
+    # Note that storing metadata may degrade performance.
+    # The following properties may be available (in most cases dependent on whether
     # they were set by the sender):
     #
     # * app-id
@@ -92,6 +95,8 @@ module LogStash
         "user-id",
       ].map { |s| s.freeze }.freeze
 
+      INTERNAL_QUEUE_POISON=[]
+
       config_name "rabbitmq"
 
       # The default codec for this plugin is JSON. You can override this to suit your particular needs however.
@@ -122,8 +127,7 @@ module LogStash
 
       # Prefetch count. If acknowledgements are enabled with the `ack`
       # option, specifies the number of outstanding unacknowledged
-      # messages allowed. With acknowledgemnts disabled this setting
-      # has no effect.
+      # messages allowed.
       config :prefetch_count, :validate => :number, :default => 256
 
       # Enable message acknowledgements. With acknowledgements
@@ -131,6 +135,9 @@ module LogStash
       # Logstash pipeline will be requeued by the server if Logstash
       # shuts down. Acknowledgements will however hurt the message
       # throughput.
+      #
+      # This will only send an ack back every `prefetch_count` messages.
+      # Working in batches provides a performance boost here.
       config :ack, :validate => :boolean, :default => true
 
       # If true the queue will be passively declared, meaning it must
@@ -157,7 +164,12 @@ module LogStash
       # before retrying. Subscribes can fail if the server goes away and then comes back.
       config :subscription_retry_interval_seconds, :validate => :number, :required => true, :default => 5
 
+      # Enable the storage of message headers and properties in `@metadata`. This may impact performance
+      config :metadata_enabled, :validate => :boolean, :default => false
+
       def register
+        @internal_queue = java.util.concurrent.ArrayBlockingQueue.new(@prefetch_count*2)
+
         connect!
         declare_queue!
         bind_exchange!
@@ -178,6 +190,7 @@ module LogStash
 
       def bind_exchange!
         if @exchange
+          raise LogStash::ConfigurationError, "No exchange type declared for exchange #{exchange}!" unless @exchange_type
           @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable)
           @hare_info.queue.bind(@exchange, :routing_key => @key)
         end
@@ -197,21 +210,8 @@ module LogStash
       end
 
       def consume!
-        # we manually build a consumer here to be able to keep a reference to it
-        # in an @ivar even though we use a blocking version of HB::Queue#subscribe
-
-        # The logic here around resubscription might seem strange, but its predicated on the fact
-        # that we rely on MarchHare to do the reconnection for us with auto_reconnect.
-        # Unfortunately, while MarchHare does the reconnection work it won't re-subscribe the consumer
-        # hence the logic below.
         @consumer = @hare_info.queue.build_consumer(:on_cancellation => Proc.new { on_cancellation }) do |metadata, data|
-          @codec.decode(data) do |event|
-            decorate(event)
-            event["@metadata"]["rabbitmq_headers"] = get_headers(metadata)
-            event["@metadata"]["rabbitmq_properties"] = get_properties(metadata)
-            @output_queue << event if event
-          end
-          @hare_info.channel.ack(metadata.delivery_tag) if @ack
+          @internal_queue.put [metadata, data]
         end
 
         begin
@@ -223,12 +223,49 @@ module LogStash
           retry
         end
 
-        while !stop?
-          sleep 1
+        internal_queue_consume!
+      end
+
+      def internal_queue_consume!
+        i=0
+        last_delivery_tag=nil
+        while true
+          payload = @internal_queue.poll(10, TimeUnit::MILLISECONDS)
+          if !payload  # Nothing in the queue
+            if last_delivery_tag # And we have unacked stuff
+              @hare_info.channel.ack(last_delivery_tag, true) if @ack
+              i=0
+              last_delivery_tag = nil
+            end
+            next
+          end
+
+          break if payload == INTERNAL_QUEUE_POISON
+
+          metadata, data = payload
+          @codec.decode(data) do |event|
+            decorate(event)
+            if @metadata_enabled
+              event["@metadata"]["rabbitmq_headers"] = get_headers(metadata)
+              event["@metadata"]["rabbitmq_properties"] = get_properties(metadata)
+            end
+            @output_queue << event if event
+          end
+
+          i += 1
+
+          if i >= @prefetch_count
+            @hare_info.channel.ack(metadata.delivery_tag, true) if @ack
+            i = 0
+            last_delivery_tag = nil
+          else
+            last_delivery_tag = metadata.delivery_tag
+          end
         end
       end
 
       def stop
+        @internal_queue.put(INTERNAL_QUEUE_POISON)
         shutdown_consumer
         close_connection
       end
