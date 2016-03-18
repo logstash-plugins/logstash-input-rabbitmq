@@ -147,10 +147,12 @@ module LogStash
       # (durable etc) must match those of the existing queue.
       config :passive, :validate => :boolean, :default => false
 
-      # The name of the exchange to bind the queue to.
+      # The name of the exchange to bind the queue to. Specify `exchange_type`
+      # as well to declare the exchange if it does not exist
       config :exchange, :validate => :string
 
-      # The type of the exchange to bind to
+      # The type of the exchange to bind to. Specifying this will cause this plugin
+      # to declare the exchange if it does not exist.
       config :exchange_type, :validate => :string
 
       # The routing key to use when binding a queue to the exchange.
@@ -190,8 +192,10 @@ module LogStash
 
       def bind_exchange!
         if @exchange
-          raise LogStash::ConfigurationError, "No exchange type declared for exchange #{exchange}!" unless @exchange_type
-          @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable)
+          if @exchange_type # Only declare the exchange if @exchange_type is set!
+            @logger.info? && @logger.info("Declaring exchange '#{@exchange}' with type #{@exchange_type}")
+            @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable)
+          end
           @hare_info.queue.bind(@exchange, :routing_key => @key)
         end
       end

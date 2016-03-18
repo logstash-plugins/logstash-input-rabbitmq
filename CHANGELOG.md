@@ -2,6 +2,8 @@
  - Ensure the consumer is done processing messages before closing channel. Fixes shutdown errors.
  - Use an internal queue + separate thread to accelerate processing
  - Disable metadata insertion by default, this slows things down majorly
+ - Make exchange_type an optional config option with using 'exchange'. 
+   When used the exchange will always be declared
 
 ## 3.3.1
   - New dependency requirements for logstash-core for the 5.0 release
