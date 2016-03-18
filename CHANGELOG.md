@@ -1,3 +1,5 @@
+# 3.3.1
+  - New dependency requirements for logstash-core for the 5.0 release
 ## 3.3.0
  - Fix a regression in 3.2.0 that reinstated behavior that duplicated consumers
  - Always declare exchanges used, the exchange now need not exist before LS starts
