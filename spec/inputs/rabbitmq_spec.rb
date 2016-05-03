@@ -199,13 +199,13 @@ describe "with a live server", :integration => true do
       let(:message) { "Foo Message" }
 
       it "should process the message and store the payload" do
-        expect(event["message"]).to eql(message)
+        expect(event.get("message")).to eql(message)
       end
 
       it "should save an empty message header hash" do
         expect(event).to include("@metadata")
-        expect(event["@metadata"]).to include("rabbitmq_headers")
-        expect(event["@metadata"]["rabbitmq_headers"]).to eq({})
+        expect(event.get("@metadata")).to include("rabbitmq_headers")
+        expect(event.get("[@metadata][rabbitmq_headers]")).to eq({})
       end
     end
 
@@ -230,9 +230,9 @@ describe "with a live server", :integration => true do
 
       it "should save message properties into a @metadata field" do
         expect(event).to include("@metadata")
-        expect(event["@metadata"]).to include("rabbitmq_properties")
+        expect(event.get("@metadata")).to include("rabbitmq_properties")
 
-        props = event["@metadata"]["rabbitmq_properties"]
+        props = event.get("[@metadata][rabbitmq_properties")
         expect(props["app-id"]).to eq(app_id)
         expect(props["delivery-mode"]).to eq(1)
         expect(props["exchange"]).to eq(exchange_name)
@@ -258,8 +258,8 @@ describe "with a live server", :integration => true do
 
       it "should save message headers into a @metadata field" do
         expect(event).to include("@metadata")
-        expect(event["@metadata"]).to include("rabbitmq_headers")
-        expect(event["@metadata"]["rabbitmq_headers"]).to include(headers)
+        expect(event.get("@metadata")).to include("rabbitmq_headers")
+        expect(event.get("[@metadata][rabbitmq_headers]")).to include(headers)
       end
     end
   end
