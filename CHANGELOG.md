@@ -1,5 +1,7 @@
-# 4.0.1
-  - Depend on logstash-core-plugin-api instead of logstash-core, removing the need to mass update plugins on major releases of logstash
+## 4.1.0
+ - Depend on new mixin with fixed TLS options
+## 4.0.1
+ - Depend on logstash-core-plugin-api instead of logstash-core, removing the need to mass update plugins on major releases of logstash
 ## 4.0.0
  - Ensure the consumer is done processing messages before closing channel. Fixes shutdown errors.
  - Use an internal queue + separate thread to accelerate processing
