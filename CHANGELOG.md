@@ -1,3 +1,6 @@
+## 5.1.0
+  - Bump mixin version to clean up TLS behavior
+
 ## 5.0.1
   - Republish all the gems under jruby.
 ## 5.0.0
