@@ -1,3 +1,6 @@
+## 5.1.1
+  - Relax constraint on logstash-core-plugin-api to >= 1.60 <= 2.99
+
 ## 5.1.0
   - Bump mixin version to clean up TLS behavior
 
