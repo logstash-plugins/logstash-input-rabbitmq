@@ -155,6 +155,10 @@ module LogStash
       # to declare the exchange if it does not exist.
       config :exchange_type, :validate => :string
 
+      # Additional arguments for exchange creation,
+      # for example, alternate-exchange
+      config :exchange_arguments, :validate => :array, :default => {}
+
       # The routing key to use when binding a queue to the exchange.
       # This is only relevant for direct or topic exchanges.
       #
@@ -193,8 +197,8 @@ module LogStash
       def bind_exchange!
         if @exchange
           if @exchange_type # Only declare the exchange if @exchange_type is set!
-            @logger.info? && @logger.info("Declaring exchange '#{@exchange}' with type #{@exchange_type}")
-            @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable)
+            @logger.info? && @logger.info("Declaring exchange '#{@exchange}' with type #{@exchange_type} and arguments #{@exchange_arguments}")
+            @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable, @exchange_arguments)
           end
           @hare_info.queue.bind(@exchange, :routing_key => @key)
         end
