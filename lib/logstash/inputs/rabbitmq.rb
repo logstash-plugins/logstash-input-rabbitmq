@@ -197,7 +197,7 @@ module LogStash
       def bind_exchange!
         if @exchange
           if @exchange_type # Only declare the exchange if @exchange_type is set!
-            @logger.info? && @logger.info("Declaring exchange '#{@exchange}' with type #{@exchange_type} and arguments #{@exchange_arguments}")
+            @logger.info? && @logger.info("Declaring exchange '#{@exchange}' with type #{@exchange_type} && arguments #{@exchange_arguments}")
             @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable, @exchange_arguments)
           end
           @hare_info.queue.bind(@exchange, :routing_key => @key)
