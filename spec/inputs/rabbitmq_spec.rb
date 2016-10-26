@@ -36,13 +36,14 @@ describe LogStash::Inputs::RabbitMQ do
       allow(instance).to receive(:connect!).and_call_original
       allow(::MarchHare).to receive(:connect).and_return(connection)
       allow(connection).to receive(:create_channel).and_return(channel)
+      allow(connection).to receive(:on_shutdown)
       allow(connection).to receive(:on_blocked)
       allow(connection).to receive(:on_unblocked)
       allow(channel).to receive(:exchange).and_return(exchange)
       allow(channel).to receive(:queue).and_return(queue)
       allow(channel).to receive(:prefetch=)
 
-      allow(queue).to receive(:build_consumer).with(:block => true)
+      allow(queue).to receive(:build_consumer).with(:on_cancellation => anything)
       allow(queue).to receive(:subscribe_with).with(any_args)
       allow(queue).to receive(:bind).with(any_args)
     end
@@ -57,6 +58,7 @@ describe LogStash::Inputs::RabbitMQ do
       context "without an exchange declared" do
         before do
           instance.register
+          instance.setup!
         end
 
         it "should set the queue correctly" do
@@ -77,9 +79,10 @@ describe LogStash::Inputs::RabbitMQ do
           allow(instance).to receive(:declare_exchange!)
         end
 
-        context "on register" do
+        context "on run" do
           before do
             instance.register
+            instance.setup!
           end
 
           it "should bind to the exchange" do
@@ -102,6 +105,7 @@ describe LogStash::Inputs::RabbitMQ do
 
           it "should reconnect" do
             instance.register
+            instance.setup!
             expect(queue).to have_received(:bind).with(any_args).twice()
           end
         end

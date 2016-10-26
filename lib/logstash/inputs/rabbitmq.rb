@@ -171,7 +171,15 @@ module LogStash
 
       def register
         @internal_queue = java.util.concurrent.ArrayBlockingQueue.new(@prefetch_count*2)
+      end
 
+      def run(output_queue)
+        setup!
+        @output_queue = output_queue
+        consume!
+      end
+
+      def setup!
         connect!
         declare_queue!
         bind_exchange!
@@ -183,11 +191,6 @@ module LogStash
                      :location => e.backtrace.first)
         sleep_for_retry
         retry
-      end
-
-      def run(output_queue)
-        @output_queue = output_queue
-        consume!
       end
 
       def bind_exchange!

@@ -1,3 +1,8 @@
+## 5.2.0
+  - Fix behavior where plugin would block on register if server was unavailable
+    Plugin will now always exit register successfully and just log errors on #run
+  - Bumped connection mixin dependency to better handle proxies and error logging
+
 ## 5.1.1
   - Relax constraint on logstash-core-plugin-api to >= 1.60 <= 2.99
 
