@@ -1,3 +1,7 @@
+## 5.2.1
+ - Bump march_hare version to fix issue where metadata would be broken for strings > 255 chars
+   due to their transformation to rabbitmq java's LongString class
+
 ## 5.2.0
   - Fix behavior where plugin would block on register if server was unavailable
     Plugin will now always exit register successfully and just log errors on #run
