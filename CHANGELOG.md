@@ -1,3 +1,6 @@
+## 5.2.2
+ - Remove legacy header normalization code. MarchHare does this directly now.
+
 ## 5.2.1
  - Bump march_hare version to fix issue where metadata would be broken for strings > 255 chars
    due to their transformation to rabbitmq java's LongString class
