@@ -297,37 +297,8 @@ module LogStash
       end
 
       private
-
-      # ByteArrayLongString is a private static inner class which
-      # can't be access via the regular Java::SomeNameSpace::Classname
-      # notation. See https://github.com/jruby/jruby/issues/3333.
-      ByteArrayLongString = JavaUtilities::get_proxy_class('com.rabbitmq.client.impl.LongStringHelper$ByteArrayLongString')
-
-      def get_header_value(value)
-        # Two kinds of values require exceptional treatment:
-        #
-        # String values are instances of
-        # com.rabbitmq.client.impl.LongStringHelper.ByteArrayLongString
-        # and we don't want to propagate those.
-        #
-        # List values are java.util.ArrayList objects and we need to
-        # recurse into them to convert any nested strings values.
-        if value.class == Java::JavaUtil::ArrayList
-          value.map{|item| get_header_value(item) }
-        elsif value.class == ByteArrayLongString
-          value.toString
-        else
-          value
-        end
-      end
-
-      private
       def get_headers(metadata)
-        if !metadata.headers.nil?
-          Hash[metadata.headers.map {|k, v| [k, get_header_value(v)]}]
-        else
-          {}
-        end
+	metadata.headers || {}
       end
 
       private
