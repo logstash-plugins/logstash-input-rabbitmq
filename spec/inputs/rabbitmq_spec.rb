@@ -130,7 +130,7 @@ end
 
 describe "with a live server", :integration => true do
   let(:klass) { LogStash::Inputs::RabbitMQ }
-  let(:config) { {"host" => "127.0.0.1", "auto_delete" => true, "codec" => "plain" } }
+  let(:config) { {"host" => "127.0.0.1", "auto_delete" => true, "codec" => "plain", "add_field" => {"[@metadata][foo]" => "bar"} } }
   let(:instance) { klass.new(config) }
   let(:hare_info) { instance.instance_variable_get(:@hare_info) }
   let(:output_queue) { Queue.new }
@@ -264,6 +264,10 @@ describe "with a live server", :integration => true do
         expect(event).to include("@metadata")
         expect(event.get("@metadata")).to include("rabbitmq_headers")
         expect(event.get("[@metadata][rabbitmq_headers]")).to include(headers)
+      end
+
+      it "should properly decorate the event" do
+        expect(event.get("[@metadata][foo]")).to eq("bar")
       end
     end
   end

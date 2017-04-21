@@ -1,3 +1,6 @@
+## 5.2.3
+ - Fix metadata decoration so that `add_field` and friends aren't overwritten by headers and properties
+
 ## 5.2.2
  - Remove legacy header normalization code. MarchHare does this directly now.
 
