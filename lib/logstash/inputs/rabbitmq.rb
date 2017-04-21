@@ -253,11 +253,8 @@ module LogStash
           @codec.decode(data) do |event|
             decorate(event)
             if @metadata_enabled
-              meta = {
-                "rabbitmq_headers" => get_headers(metadata),
-                "rabbitmq_properties" => get_properties(metadata)
-              }
-              event.set("@metadata", meta)
+              event.set("[@metadata][rabbitmq_headers]", get_headers(metadata))
+              event.set("[@metadata][rabbitmq_properties]", get_properties(metadata))
             end
             @output_queue << event if event
           end
