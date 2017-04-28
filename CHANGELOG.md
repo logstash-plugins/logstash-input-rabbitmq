@@ -1,3 +1,6 @@
+## 5.2.4
+ - Require v4.3.0 of rabbitmq-connection_mixin which bumps the major version of the java rabbitmq lib
+
 ## 5.2.3
  - Fix metadata decoration so that `add_field` and friends aren't overwritten by headers and properties
 

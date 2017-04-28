@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   # Gem dependencies
   s.add_runtime_dependency "logstash-core-plugin-api", ">= 1.60", "<= 2.99"
-  s.add_runtime_dependency "logstash-mixin-rabbitmq_connection", '>= 4.2.2', '< 5.0.0'
+  s.add_runtime_dependency "logstash-mixin-rabbitmq_connection", '>= 4.3.0', '< 5.0.0'
 
   s.add_runtime_dependency 'logstash-codec-json'
 
