@@ -370,26 +370,6 @@ before retrying. Subscribes can fail if the server goes away and then comes back
   * Value type is <<number,number>>
   * Default value is `1`
 
-
-
-[id="plugins-{type}s-{plugin}-tls_certificate_password"]
-===== `tls_certificate_password`  (DEPRECATED)
-
-  * DEPRECATED WARNING: This configuration item is deprecated and may not be available in future versions.
-  * Value type is <<string,string>>
-  * There is no default value for this setting.
-
-TLS certificate password
-
-[id="plugins-{type}s-{plugin}-tls_certificate_path"]
-===== `tls_certificate_path`  (DEPRECATED)
-
-  * DEPRECATED WARNING: This configuration item is deprecated and may not be available in future versions.
-  * Value type is <<path,path>>
-  * There is no default value for this setting.
-
-TLS certifcate path
-
 [id="plugins-{type}s-{plugin}-user"]
 ===== `user` 
 
