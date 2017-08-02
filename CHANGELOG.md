@@ -1,3 +1,6 @@
+## 6.0.0
+ - Require v5.0.0 of rabbitmq-connection_mixin which obsoletes some deprecated options
+
 ## 5.2.4
  - Require v4.3.0 of rabbitmq-connection_mixin which bumps the major version of the java rabbitmq lib
 
