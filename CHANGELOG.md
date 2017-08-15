@@ -1,3 +1,6 @@
+## 6.0.1
+  - Fix some documentation issues
+
 ## 6.0.0
  - Require v5.0.0 of rabbitmq-connection_mixin which obsoletes some deprecated options
 
