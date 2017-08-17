@@ -1,3 +1,6 @@
+## 5.2.5
+ - Documentation fixes
+
 ## 5.2.4
  - Require v4.3.0 of rabbitmq-connection_mixin which bumps the major version of the java rabbitmq lib
 

@@ -1,0 +1,78 @@
+From ee961413fbf60e8e9e9479cf8d97f38b1e8919e6 Mon Sep 17 00:00:00 2001
+From: Mike Lang <mikelang3000@gmail.com>
+Date: Thu, 20 Feb 2014 12:16:30 -0800
+Subject: [PATCH 1/3] Fix thread/connection leak in RabbitMQ::MarchHare
+
+On a non-connection-fatal exception (for example, if the queue was not found),
+the error handling code would attempt to reconnect without closing the old
+connection first. This resulted in hundreds of simultanious open connections,
+tying up rabbitmq resources and causing local load problems as well,
+with thousands of idle threads.
+---
+ lib/logstash/inputs/rabbitmq/march_hare.rb | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/lib/logstash/inputs/rabbitmq/march_hare.rb b/lib/logstash/inputs/rabbitmq/march_hare.rb
+index 6a80d4d..f78a378 100644
+--- a/lib/logstash/inputs/rabbitmq/march_hare.rb
++++ b/lib/logstash/inputs/rabbitmq/march_hare.rb
+@@ -53,6 +53,8 @@ def run(output_queue)
+           n = 10
+           @logger.error("RabbitMQ connection error: #{e}. Will reconnect in #{n} seconds...")
+ 
++          @conn.close if @conn && @conn.open?
++
+           sleep n
+           retry
+         rescue LogStash::ShutdownSignal => ss
+
+From 7d60564c9ca824101497337c03b5542debb2010b Mon Sep 17 00:00:00 2001
+From: Mike Lang <mikelang3000@gmail.com>
+Date: Thu, 20 Feb 2014 14:22:10 -0800
+Subject: [PATCH 2/3] Fix incorrect variable in RabbitMQ::MarchHare
+
+@connection was being used when @conn was intended.
+---
+ lib/logstash/inputs/rabbitmq/march_hare.rb | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lib/logstash/inputs/rabbitmq/march_hare.rb b/lib/logstash/inputs/rabbitmq/march_hare.rb
+index f78a378..15faef0 100644
+--- a/lib/logstash/inputs/rabbitmq/march_hare.rb
++++ b/lib/logstash/inputs/rabbitmq/march_hare.rb
+@@ -70,8 +70,8 @@ def teardown
+       shutdown_consumer
+       @q.delete unless @durable
+ 
+-      @ch.close         if @ch && @ch.open?
+-      @connection.close if @connection && @connection.open?
++      @ch.close   if @ch && @ch.open?
++      @conn.close if @conn && @conn.open?
+ 
+       finished
+     end
+
+From 4b2430d6247f018b2d5a9fbd80f3f571726c84e2 Mon Sep 17 00:00:00 2001
+From: Mike Lang <mikelang3000@gmail.com>
+Date: Mon, 21 Apr 2014 14:03:34 -0700
+Subject: [PATCH 3/3] inputs/rabbitmq/hot_bunnies.rb: Declare exchange before
+ binding
+
+---
+ lib/logstash/inputs/rabbitmq/march_hare.rb | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/lib/logstash/inputs/rabbitmq/march_hare.rb b/lib/logstash/inputs/rabbitmq/march_hare.rb
+index 15faef0..a98eaab 100644
+--- a/lib/logstash/inputs/rabbitmq/march_hare.rb
++++ b/lib/logstash/inputs/rabbitmq/march_hare.rb
+@@ -103,6 +103,9 @@ def setup
+ 
+       # exchange binding is optional for the input
+       if @exchange
++        @ch.exchange(@exchange,
++          :durable     => @durable,
++          :auto_delete => @auto_delete)
+         @q.bind(@exchange, :routing_key => @key)
+       end
+     end
