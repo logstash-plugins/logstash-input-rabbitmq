@@ -1,3 +1,7 @@
+## 6.0.4
+ - Fixes bug where attempting to read from undeclared exchange resulted in infinite retry loop ([#117](https://github.com/logstash-plugins/logstash-input-rabbitmq/issues/117))
+ - Fixes bug where failing to establish initial connection resulted in a pipeline that refused to shut down ([#116](https://github.com/logstash-plugins/logstash-input-rabbitmq/issues/116))
+
 ## 6.0.3
   - Docs: Set the default_codec doc attribute.
 
