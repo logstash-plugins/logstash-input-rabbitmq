@@ -177,6 +177,13 @@ module LogStash
         setup!
         @output_queue = output_queue
         consume!
+      rescue => e
+        raise unless stop?
+
+        logger.warn("Ignoring exception thrown during plugin shutdown",
+                    :message  => e.message,
+                    :class    => e.class.name,
+                    :location => e.backtrace.first)
       end
 
       def setup!
@@ -185,9 +192,13 @@ module LogStash
         bind_exchange!
         @hare_info.channel.prefetch = @prefetch_count
       rescue => e
+        # when encountering an exception during shut-down,
+        # re-raise the exception instead of retrying
+        raise if stop?
+
         @logger.warn("Error while setting up connection for rabbitmq input! Will retry.",
-                     :message => e.message,
-                     :class => e.class.name,
+                     :message  => e.message,
+                     :class    => e.class.name,
                      :location => e.backtrace.first)
         sleep_for_retry
         retry
