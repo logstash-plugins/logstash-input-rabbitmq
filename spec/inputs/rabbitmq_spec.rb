@@ -39,6 +39,7 @@ describe LogStash::Inputs::RabbitMQ do
       allow(connection).to receive(:on_shutdown)
       allow(connection).to receive(:on_blocked)
       allow(connection).to receive(:on_unblocked)
+      allow(connection).to receive(:close)
       allow(channel).to receive(:exchange).and_return(exchange)
       allow(channel).to receive(:queue).and_return(queue)
       allow(channel).to receive(:prefetch=)

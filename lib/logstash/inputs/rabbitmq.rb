@@ -196,12 +196,24 @@ module LogStash
         # re-raise the exception instead of retrying
         raise if stop?
 
+        reset!
+
         @logger.warn("Error while setting up connection for rabbitmq input! Will retry.",
                      :message  => e.message,
                      :class    => e.class.name,
                      :location => e.backtrace.first)
         sleep_for_retry
         retry
+      end
+
+      # reset a partially-established connection, enabling subsequent
+      # call to `RabbitMQ#setup!` to succeed.
+      #
+      # @api private
+      def reset!
+        @hare_info.connection && @hare_info.connection.close
+      ensure
+        @hare_info = nil
       end
 
       def bind_exchange!
