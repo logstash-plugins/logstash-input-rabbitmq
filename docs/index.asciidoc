@@ -233,7 +233,13 @@ i.e.
 or
   host => ["host01", "host02]
 
-if multiple hosts are provided on the initial connection and any subsequent
+A host can also include a port
+i.e.
+host => ["host01:123", "host02:234]
+
+Note that if a host does not include a port, the `port` option will be applied.
+
+If multiple hosts are provided on the initial connection and any subsequent
 recovery attempts of the hosts is chosen at random and connected to.
 Note that only one host connection is active at a time.
 
@@ -283,7 +289,8 @@ RabbitMQ password
   * Value type is <<number,number>>
   * Default value is `5672`
 
-RabbitMQ port to connect on
+RabbitMQ port to connect on.
+This port number will be applied to hosts of the `host` option without an explicit port.
 
 [id="plugins-{type}s-{plugin}-prefetch_count"]
 ===== `prefetch_count` 

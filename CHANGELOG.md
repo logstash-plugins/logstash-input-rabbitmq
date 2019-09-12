@@ -1,3 +1,8 @@
+## 7.0.0
+  - Require v6 version of rabbitmq-connection_mixin which removed obsolete options, hence the major bump.
+  - Updated march_hare dependency to 4.x via rabbitmq-connection_mixin 6.1.0
+  - Fixed issue with custom port assignment when multiple hosts are specified via rabbitmq-connection_mixin 6.1.1
+
 ## 6.0.3
   - Docs: Set the default_codec doc attribute.
 
