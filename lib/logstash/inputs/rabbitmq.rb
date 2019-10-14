@@ -121,12 +121,6 @@ module LogStash
       # restart).
       config :exclusive, :validate => :boolean, :default => false
 
-      # Optional queue arguments as an array.
-      #
-      # Relevant RabbitMQ doc guides:
-      #  * https://www.rabbitmq.com/queues.html#optional-arguments
-      #  * https://www.rabbitmq.com/parameters.html#policies
-      #  * https://www.rabbitmq.com/quorum-queues.html
       config :arguments, :validate => :array, :default => {}
 
       # Prefetch count. If acknowledgements are enabled with the `ack`
