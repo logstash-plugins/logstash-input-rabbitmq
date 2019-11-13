@@ -121,8 +121,6 @@ module LogStash
       # restart).
       config :exclusive, :validate => :boolean, :default => false
 
-      # Extra queue arguments as an array.
-      # To make a RabbitMQ queue mirrored, use: `{"x-ha-policy" => "all"}`
       config :arguments, :validate => :array, :default => {}
 
       # Prefetch count. If acknowledgements are enabled with the `ack`
