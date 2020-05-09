@@ -197,6 +197,8 @@ The default connection timeout in milliseconds. If not specified the timeout is 
   * Default value is `false`
 
 Is this queue durable? (aka; Should it survive a broker restart?)
+If consuming directly from a queue you must set this value to match the existing queue setting,
+otherwise the connection will fail due to an inequivalent arg error.
 
 [id="plugins-{type}s-{plugin}-exchange"]
 ===== `exchange`
